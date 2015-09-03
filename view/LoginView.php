@@ -9,9 +9,6 @@ class LoginView {
 	private static $cookiePassword = 'LoginView::CookiePassword';
 	private static $keep = 'LoginView::KeepMeLoggedIn';
 	private static $messageId = 'LoginView::Message';
-        private static $controller;
-        private static $authenticate;
-        private static $ifLoggedIn;
 
         public function __construct() {
         }
@@ -25,10 +22,26 @@ class LoginView {
 	 */
 	public function response() {
 		$message = '';
+                // If the login button have been pushed
                 if(isset($_POST["LoginView::Login"]))
                 {
-                    $response = $this->generateLogoutButtonHTML($message);
+                    // Let the controller validate the username and password
+                    require_once 'controller/Controller.php';
+                    $controll = new Controller();
+                    $result = $controll->authenticate();
+                    // If the username and password is correct
+                    if($result == "correct")
+                    {
+                         $response = $this->generateLogoutButtonHTML($message);
+                    }
+                    // Else show the error message and login form
+                    else
+                    {
+                        $message = $result;
+                        $response = $this->generateLoginFormHTML($message);
+                    }                   
                 }
+                // Else show the login form
                 else 
                 {
                     $response = $this->generateLoginFormHTML($message);
@@ -52,7 +65,7 @@ class LoginView {
 	}
 	
 	/**
-	* Generate HTML code on the output buffer for the logout button
+	* Generate HTML code on the output buffer for the login form
 	* @param $message, String output message
 	* @return  void, BUT writes to standard output!
 	*/
