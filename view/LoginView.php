@@ -44,6 +44,11 @@ class LoginView {
                 // Else show the login form
                 else 
                 {
+                    // If you just logged out, add a logout message
+                    if(isset($_POST["LoginView::Logout"]))
+                    {
+                         $message = "Bye bye!";
+                    }
                     $response = $this->generateLoginFormHTML($message);
                 }
                             
