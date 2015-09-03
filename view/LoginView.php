@@ -32,7 +32,8 @@ class LoginView {
                     // If the username and password is correct
                     if($result == "correct")
                     {
-                         $response = $this->generateLogoutButtonHTML($message);
+                        $message = "Welcome";
+                        $response = $this->generateLogoutButtonHTML($message);
                     }
                     // Else show the error message and login form
                     else
