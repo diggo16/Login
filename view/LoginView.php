@@ -9,8 +9,12 @@ class LoginView {
 	private static $cookiePassword = 'LoginView::CookiePassword';
 	private static $keep = 'LoginView::KeepMeLoggedIn';
 	private static $messageId = 'LoginView::Message';
+        private static $controller;
+        private static $authenticate;
+        private static $ifLoggedIn;
 
-	
+        public function __construct() {
+        }
 
 	/**
 	 * Create HTTP response
@@ -21,9 +25,15 @@ class LoginView {
 	 */
 	public function response() {
 		$message = '';
-		
-		$response = $this->generateLoginFormHTML($message);
-		//$response .= $this->generateLogoutButtonHTML($message);
+                if(isset($_POST["LoginView::Login"]))
+                {
+                    $response = $this->generateLogoutButtonHTML($message);
+                }
+                else 
+                {
+                    $response = $this->generateLoginFormHTML($message);
+                }
+                            
 		return $response;
 	}
 
@@ -47,8 +57,9 @@ class LoginView {
 	* @return  void, BUT writes to standard output!
 	*/
 	private function generateLoginFormHTML($message) {
+            
 		return '
-			<form method="post" > 
+			<form method="post"> 
 				<fieldset>
 					<legend>Login - enter Username and password</legend>
 					<p id="' . self::$messageId . '">' . $message . '</p>
@@ -65,7 +76,7 @@ class LoginView {
 					<input type="submit" name="' . self::$login . '" value="login" />
 				</fieldset>
 			</form>
-		';
+		';      
 	}
 	
 	//CREATE GET-FUNCTIONS TO FETCH REQUEST VARIABLES
