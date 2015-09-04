@@ -20,29 +20,17 @@ class Controller {
     /*
      * Check if the username and password are correct
      */
-   public function authenticate()
-   {
-       $username = filter_input(INPUT_POST,"LoginView::UserName",FILTER_SANITIZE_STRING);
-       $password = filter_input(INPUT_POST,"LoginView::Password",FILTER_SANITIZE_STRING);
-       
+   public function authenticate($username, $password)
+   {   
        $loginRules = new LoginRules();
        $resultString = $loginRules->checkLoginInformation($username, $password);
-       
        return $resultString;
    }
-   public function isLoggedIn()
+   public function isLoggedIn($username, $password)
    {
-       if(isset($_SESSION["username"]) && isset($_SESSION["password"]))
+       if($this->authenticate($username, $password) == "correct")
        {
-            $username = $_SESSION["username"];
-            $password = $_SESSION["password"];
-            $loginRules = new LoginRules();
-            $resultString = $loginRules->checkLoginInformation($username, $password);
-            if($resultString == "correct")
-            {
-                return true;
-            }
-            return false;
+           return true;
        }
        return false;
    }

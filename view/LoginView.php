@@ -15,7 +15,6 @@ class LoginView {
         {
             require_once 'controller/Controller.php';
         }
-
 	/**
 	 * Create HTTP response
 	 *
@@ -29,35 +28,54 @@ class LoginView {
             // Let the controller validate the username and password
                         
             self::$controller = new Controller();
-            // If the user is logged in
-            if(self::$controller->isLoggedIn())
+            $username = filter_input(INPUT_POST,"LoginView::UserName",FILTER_SANITIZE_STRING);
+            $password = filter_input(INPUT_POST,"LoginView::Password",FILTER_SANITIZE_STRING);
+            /*
+             * If the logout button is pushed
+             */
+            if($this->ifLogoutButtonPushed())
             {
-                // If the user has pushed on the logout button
-               if($this->ifLogoutButtonPushed())
-               {
-                   $message = "Bye bye!";
-                   $this->generateLoginFormHTML($message);
-               }
-               // Else show the content for the logged in user
-               else
-               {
+                   return $this->logout("Bye bye!");
+            }
+            /*
+             * If correct cookies is set
+             */
+            if($this->ifCookiesLoggedIn())
+            {
+                return $this->loginResponse();
+            }
+            /*
+             * If you have pushed the login button
+             */
+            if($this->ifLoginButtonPushed())
+            {   
+                $this->keepLoggedIn(); 
+                $result = self::$controller->authenticate($username, $password);
+                $response = $this->getLoginResponse($result);
+                return $response;
+            }
+            /*
+             * If you already are logged in
+             */
+            if(self::$controller->isLoggedIn($username, $password))
+            {
+                echo "already logged in";
                    $message = "Welcome";
                    $response = $this->generateLogoutButtonHTML($message); 
-               }             
+                   return $this->loginResponse();             
             }
             else 
             {
                // If the user has pushed the login button
                if($this->ifLoginButtonPushed())
-               {
-                   $result = self::$controller->authenticate();
+               {   
+                   $result = self::$controller->authenticate($username, $password);
                    $response = $this->getLoginResponse($result);
                }
                // Else show the login form
                else
                { 
-                   //echo "response :" . $response;
-                   $response = $this->generateLoginFormHTML($message);
+                   $response = $this->logout("");
                }
             }
             return $response;
@@ -129,6 +147,7 @@ class LoginView {
             if(filter_input(INPUT_POST,self::$logout)!= NULL)
             {
                 unset($_POST[self::$logout]);
+                unset($_POST[self::$keep]);
                 return true;        
             }
             return false;
@@ -140,6 +159,7 @@ class LoginView {
         {
             if($result == "correct")
             {
+               $this->keepLoggedIn();
                return $this->loginResponse(); 
             }
             return $this->generateLoginFormHTML($result);
@@ -152,5 +172,64 @@ class LoginView {
             $message = "Welcome";
             return $this->generateLogoutButtonHTML($message);
         }
-	
+        /*
+         * Check if the user want to keep to be logged in or not
+         */
+        private function keepLoggedIn()
+        {
+            $keepLoggedIn = filter_input(INPUT_POST,self::$keep);
+            /*
+             * if it is set, save the username and password in the objects
+             * cookieName and cookiePassword
+             */
+            if($keepLoggedIn != NULL)
+            {
+                $username = filter_input(INPUT_POST,self::$name);
+                $password = filter_input(INPUT_POST,self::$password);
+                setcookie(self::$cookieName, $username, time() + (86400 * 1), "/"); // 86400 = 1 day
+                setcookie(self::$cookiePassword, $password, time() + (86400 * 1), "/"); // 86400 = 1 day
+            }
+            /*
+             * Else remove the saved data if there is any
+             */
+            else
+            {
+                setcookie(self::$cookieName, "", time() - 3600);
+                setcookie(self::$cookiePassword, "", time() - 3600);
+            }
+        }
+        private function ifCookiesLoggedIn()
+        {
+            $cookieName = filter_input(INPUT_COOKIE, self::$cookieName);
+            $cookiePassword = filter_input(INPUT_COOKIE, self::$cookiePassword);
+            
+            if(isset($cookieName) && isset($cookiePassword))
+            {
+                $result = self::$controller->authenticate($cookieName, $cookiePassword);
+                if($result == "correct")
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private function deleteCookies()
+        {
+            $cookieName = filter_input(INPUT_COOKIE, self::$cookieName);
+            $cookiePassword = filter_input(INPUT_COOKIE, self::$cookiePassword);
+            if(isset($cookieName))
+            {
+                setcookie(self::$cookieName, null, -1, '/');
+            }
+            if(isset($cookiePassword))
+            {
+                setcookie(self::$cookiePassword, null, -1, '/');
+            }
+        }
+        private function logout($message)
+        {
+            $this->deleteCookies();  
+            $response = $this->generateLoginFormHTML($message);
+            return $response;
+        }
 }
