@@ -14,8 +14,8 @@ class LoginRules {
     {
         // Include the class User.php and creates the "correct" user
         require_once 'model/User.php';
-        $correctUsername = "admin";         // Correct username
-        $correctPassword = "password";      // Correct password
+        $correctUsername = "Admin";         // Correct username
+        $correctPassword = "Password";      // Correct password
         self::$correctUser = new User($correctUsername, $correctPassword);
         //Return error message if the username is empty
         if($this->missingUsername($username))

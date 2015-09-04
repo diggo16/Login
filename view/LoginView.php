@@ -1,5 +1,4 @@
 <?php
-
 class LoginView {
 	private static $login = 'LoginView::Login';
 	private static $logout = 'LoginView::Logout';
@@ -9,8 +8,12 @@ class LoginView {
 	private static $cookiePassword = 'LoginView::CookiePassword';
 	private static $keep = 'LoginView::KeepMeLoggedIn';
 	private static $messageId = 'LoginView::Message';
+        
+        private static $controller;
 
-        public function __construct() {
+        public function __construct() 
+        {
+            require_once 'controller/Controller.php';
         }
 
 	/**
@@ -21,39 +24,43 @@ class LoginView {
 	 * @return  void BUT writes to standard output and cookies!
 	 */
 	public function response() {
-		$message = '';
-                // If the login button have been pushed
-                if(isset($_POST["LoginView::Login"]))
-                {
-                    // Let the controller validate the username and password
-                    require_once 'controller/Controller.php';
-                    $controll = new Controller();
-                    $result = $controll->authenticate();
-                    // If the username and password is correct
-                    if($result == "correct")
-                    {
-                        $message = "Welcome";
-                        $response = $this->generateLogoutButtonHTML($message);
-                    }
-                    // Else show the error message and login form
-                    else
-                    {
-                        $message = $result;
-                        $response = $this->generateLoginFormHTML($message);
-                    }                   
-                }
-                // Else show the login form
-                else 
-                {
-                    // If you just logged out, add a logout message
-                    if(isset($_POST["LoginView::Logout"]))
-                    {
-                         $message = "Bye bye!";
-                    }
-                    $response = $this->generateLoginFormHTML($message);
-                }
-                            
-		return $response;
+            $message = '';
+            $response = '';
+            // Let the controller validate the username and password
+                        
+            self::$controller = new Controller();
+            // If the user is logged in
+            if(self::$controller->isLoggedIn())
+            {
+                // If the user has pushed on the logout button
+               if($this->ifLogoutButtonPushed())
+               {
+                   $message = "Bye bye!";
+                   $this->generateLoginFormHTML($message);
+               }
+               // Else show the content for the logged in user
+               else
+               {
+                   $message = "Welcome";
+                   $response = $this->generateLogoutButtonHTML($message); 
+               }             
+            }
+            else 
+            {
+               // If the user has pushed the login button
+               if($this->ifLoginButtonPushed())
+               {
+                   $result = self::$controller->authenticate();
+                   $response = $this->getLoginResponse($result);
+               }
+               // Else show the login form
+               else
+               { 
+                   //echo "response :" . $response;
+                   $response = $this->generateLoginFormHTML($message);
+               }
+            }
+            return $response;
 	}
 
 	/**
@@ -99,8 +106,51 @@ class LoginView {
 	}
 	
 	//CREATE GET-FUNCTIONS TO FETCH REQUEST VARIABLES
-	private function getRequestUserName() {
-		//RETURN REQUEST VARIABLE: USERNAME
+	private function getRequestUserName($username) {
+		return("?".self::$name."=".$username);
 	}
+        /*
+         * If the user has pushed the login button
+         */
+        private function ifLoginButtonPushed()
+        {
+            if(filter_input(INPUT_POST,self::$login)!= NULL)
+            {
+                unset($_POST[self::$login]);
+                return true;        
+            }
+            return false;
+        }
+        /*
+         * If the user has pushed the logout button
+         */
+        private function ifLogoutButtonPushed() 
+        {
+            if(filter_input(INPUT_POST,self::$logout)!= NULL)
+            {
+                unset($_POST[self::$logout]);
+                return true;        
+            }
+            return false;
+        }
+        /*
+         * Validate the username and password and return the correct response
+         */
+        private function getLoginResponse($result)
+        {
+            if($result == "correct")
+            {
+               return $this->loginResponse(); 
+            }
+            return $this->generateLoginFormHTML($result);
+        }
+        /*
+         * Return the response for a logged in user
+         */
+        private function loginResponse()
+        {
+            $message = "Welcome";
+            return $this->generateLogoutButtonHTML($message);
+        }
 	
 }
